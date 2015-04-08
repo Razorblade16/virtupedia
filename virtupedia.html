@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Virtupedia</title>
+  <script type="text/javascript" src="peer.js"></script>
+  <script type="text/javascript">
+    "use strict"
+
+    function getPeerIds() {
+      return (location.toString().split('#')[1] || '').split('-')
+    }
+
+    function getThisPeerId() {
+      return 'virtupedia-'+getPeerIds()[0]
+    }
+
+    function getThatPeerId() {
+      return 'virtupedia-'+getPeerIds()[1]
+    }
+
+    function getMyPeer() {
+      if (getMyPeer.peer) return getMyPeer.peer
+      getMyPeer.peer = new Peer(getThisPeerId(), {key: 'p659hx84g09vygb9'})
+
+      getMyPeer.peer.on('connection', function(connection) {
+        connection.on('data', function(data) {
+          console.log('received data from '+connection.peer, data)
+        })
+      })
+
+      return getMyPeer.peer
+    }
+
+    function createConnection(otherPeerId) {
+      var connection = {}
+
+      var _connection = getMyPeer().connect(otherPeerId)
+
+      var dataCallbacks = []
+
+      _connection.on('open', function() {
+        console.log("opened connection with peer "+otherPeerId)
+        _connection.on('data', function(data) {
+          console.log("received from "+otherPeerId, data)
+          dataCallbacks.forEach(function(cb) { cb.call(null, data) })
+        })
+      })
+
+      connection.whenDataReceived = function(callback) {
+        dataCallbacks.push(callback)
+      }
+
+      connection.send = function(data) {
+        return _connection.send(data)
+      }
+
+      return connection
+    }
+
+    var connection = createConnection(getThatPeerId())
+    connection.whenDataReceived(function(data) {
+      console.log("whenDataReceived", data)
+    })
+
+    connection.send('asdfasdfasdfa')
+  </script>
+</head>
+<body>
+  <p>the page is displayed</p>
+</body>
+</html>
